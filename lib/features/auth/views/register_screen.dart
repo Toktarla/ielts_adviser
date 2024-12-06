@@ -1,14 +1,8 @@
 import 'package:email_validator/email_validator.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:proj_management_project/services/firebase_messaging_service.dart';
-import 'package:proj_management_project/services/local_notifications_service.dart';
+import 'package:proj_management_project/features/auth/providers/authentication_provider.dart';
+import 'package:proj_management_project/utils/mixins/focus_node_mixin.dart';
 import 'package:provider/provider.dart';
-
-import '../../mixins/focus_node_mixin.dart';
-import '../../providers/auth_provider.dart';
 
 class RegisterPage extends StatefulWidget with FocusNodeMixin {
   const RegisterPage({Key? key}) : super(key: key);
@@ -250,7 +244,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       confirmPasswordFocusNode.unfocus();
                       final isValidForm = _formKey.currentState!.validate();
                       if (isValidForm) {
-                        context.read<AuthenticationProvider>().signUpUser(emailController.text, passwordController.text, confirmPasswordController.text, fullNameController.text, context);
+                        context.read<AuthenticationProvider>().signUp(emailController.text, passwordController.text, confirmPasswordController.text, fullNameController.text, context);
                       }
                     },
                     child: Text('Sign Up',

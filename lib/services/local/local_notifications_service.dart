@@ -1,7 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:proj_management_project/services/firestore_service.dart';
+import 'package:proj_management_project/config/di/injection_container.dart';
+import 'package:proj_management_project/services/remote/firestore_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -61,8 +62,8 @@ class LocalNotificationService {
     );
 
     const notificationDetails = NotificationDetails(android: androidDetails);
-
-    final message = await FirestoreService().fetchRandomMotivationalMessage();
+    final firestoreService = sl<FirestoreService>();
+    final message = await firestoreService.fetchRandomMotivationalMessage();
     final scheduledTime = _nextInstanceOfTime(15, 0);
     print("Scheduled time for notification: $scheduledTime");
 

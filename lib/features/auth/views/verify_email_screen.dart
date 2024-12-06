@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:proj_management_project/pages/streak_tracker_page.dart';
-import 'package:proj_management_project/services/firestore_service.dart';
-
+import 'package:proj_management_project/features/streak/views/streak_tracker_page.dart';
+import 'package:proj_management_project/services/remote/firestore_service.dart';
+import 'package:proj_management_project/config/di/injection_container.dart';
 
 class VerifyEmailPage extends StatefulWidget {
   const VerifyEmailPage({Key? key}) : super(key: key);
@@ -16,7 +16,9 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   Timer? timer;
   bool isEmailVerified = false;
   bool canResendEmail = false;
-  final FirestoreService firestoreService = FirestoreService();
+
+  final firestoreService = sl<FirestoreService>();
+
   @override
   void initState() {
     super.initState();

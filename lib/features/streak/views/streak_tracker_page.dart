@@ -1,6 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-import '../services/firestore_service.dart';
+import 'package:proj_management_project/config/di/injection_container.dart';
+import '../../../services/remote/firestore_service.dart';
 
 class StreakTracker extends StatefulWidget {
   final String userId;
@@ -11,13 +12,11 @@ class StreakTracker extends StatefulWidget {
   State<StreakTracker> createState() => _StreakTrackerState();
 }
 
-class _StreakTrackerState extends State<StreakTracker>
-    with SingleTickerProviderStateMixin {
+class _StreakTrackerState extends State<StreakTracker> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
   int streakCount = 0;
-
-  final FirestoreService _firestoreService = FirestoreService();
+  final FirestoreService _firestoreService = sl<FirestoreService>();
 
   @override
   void initState() {
@@ -79,7 +78,7 @@ class _StreakTrackerState extends State<StreakTracker>
                 days[index],
                 style: TextStyle(
                   color: isActive ? Colors.white : Colors.black54,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   fontSize: 16,
                 ),
               ),
@@ -92,76 +91,66 @@ class _StreakTrackerState extends State<StreakTracker>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.orangeAccent, Colors.deepOrange],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: [
-          const BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          )
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ScaleTransition(
-            scale: _animation,
-            child: const Icon(
-              Icons.local_fire_department,
-              color: Colors.amber,
-              size: 100,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '🔥 $streakCount Day Streak!',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Talk with your adviser and ask for advice to build your streak!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white70,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildDayCircles(),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.orange,
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ScaleTransition(
+              scale: _animation,
+              child: const Icon(
+                Icons.local_fire_department,
+                color: Colors.amber,
+                size: 100,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            onPressed: () {
-              Navigator.of(context).pushNamed('/HomePage');
-            },
-            child: const Text(
-              'Continue',
+            const SizedBox(height: 16),
+            Text(
+              '🔥 $streakCount Day Streak!',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Talk with your adviser and ask for advice to build your streak!',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            _buildDayCircles(),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white, backgroundColor: Colors.lightBlue, // White text color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              onPressed: () {
+                Navigator.of(context).pushNamed('/HomePage', arguments: {
+                  'userId': FirebaseAuth.instance.currentUser?.uid
+                });
+              },
+              child: const Text(
+                'Continue',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

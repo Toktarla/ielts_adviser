@@ -1,19 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:proj_management_project/services/firebase_messaging_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:proj_management_project/services/remote/firebase_messaging_service.dart';
 
 class FirestoreService {
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final FirebaseMessagingService _firebaseMessagingService = FirebaseMessagingService();
-
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _firebaseAuth;
+  final FirebaseMessagingService firebaseMessagingService;
   late final String? _currentUserUid;
 
-  FirestoreService() {
+  FirestoreService(this._firestore,this._firebaseAuth,this.firebaseMessagingService) {
     _currentUserUid = _firebaseAuth.currentUser?.uid ?? "";
   }
-
 
   Future<DocumentSnapshot> getUserDocument(String userId) async {
     return await _firestore.collection('users').doc(userId).get();
@@ -32,36 +31,39 @@ class FirestoreService {
     return doc.exists ? doc.data() : null;
   }
 
+  // Update streak count, but only once per day
   Future<void> updateStreak(String userId) async {
-    final userDoc = _firestore.collection('users').doc(userId);
-    final today = DateTime.now();
-    final todayStr = "${today.year}-${today.month}-${today.day}";
+    try {
+      // Get current date as a string (e.g., '2024-12-03')
+      String currentDate = DateTime.now().toIso8601String().split('T').first;
 
-    final docSnapshot = await userDoc.get();
+      // Fetch current streak data
+      DocumentReference userDoc = _firestore.collection('users').doc(userId);
+      DocumentSnapshot userSnapshot = await userDoc.get();
 
-    if (docSnapshot.exists) {
-      final data = docSnapshot.data();
-      final lastActiveDate = data?['lastActiveDate'];
-      int streakCount = data?['streakCount'] ?? 0;
+      if (userSnapshot.exists) {
+        Map<String, dynamic> userData = userSnapshot.data() as Map<String, dynamic>;
 
-      if (lastActiveDate != todayStr) {
-        if (lastActiveDate == _yesterday()) {
-          streakCount++;
-        } else {
-          streakCount = 1; // Reset streak.
+        // Check if the streak was updated today
+        String? lastUpdatedDate = userData['lastUpdatedDate'];
+        int streakCount = userData['streakCount'] ?? 0;
+
+        if (lastUpdatedDate != currentDate) {
+          // Streak has not been updated today, so increment it
+          await userDoc.update({
+            'streakCount': streakCount + 1,
+            'lastUpdatedDate': currentDate, // Store today's date
+          });
         }
-
+      } else {
+        // If no user data, create it with an initial streak count and today's date
         await userDoc.set({
-          'streakCount': streakCount,
-          'lastActiveDate': todayStr,
-        }, SetOptions(merge: true));
+          'streakCount': 1,
+          'lastUpdatedDate': currentDate,
+        });
       }
-    } else {
-      // First-time setup.
-      await userDoc.set({
-        'streakCount': 1,
-        'lastActiveDate': todayStr,
-      });
+    } catch (e) {
+      print("Error updating streak: $e");
     }
   }
 
@@ -69,6 +71,7 @@ class FirestoreService {
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
     return "${yesterday.year}-${yesterday.month}-${yesterday.day}";
   }
+
 
   Future<void> updateToken(String? fcmToken) async {
     final user = _firebaseAuth.currentUser;
@@ -104,5 +107,19 @@ class FirestoreService {
     return snapshot.docs[randomIndex].data()['text'] as String?;
   }
 
+  Future<void> createUserRecord({
+    required String userId,
+    required String email,
+    required String fullName,
+  }) async {
+    String? fcmToken = await FirebaseMessaging.instance.getToken();
+    await _firestore.collection('users').doc(userId).set({
+      'addtime': Timestamp.now(),
+      'email': email,
+      'fcmToken': fcmToken ?? '',
+      'userId': userId,
+      'name': fullName,
+    });
+  }
 
 }

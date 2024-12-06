@@ -1,16 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:proj_management_project/core/routes.dart';
-import 'package:proj_management_project/pages/auth/register_screen.dart';
-import 'package:proj_management_project/providers/auth_provider.dart';
+import 'package:proj_management_project/config/di/injection_container.dart';
+import 'package:proj_management_project/config/routes.dart';
+import 'package:proj_management_project/features/auth/providers/authentication_provider.dart';
+import 'package:proj_management_project/features/auth/views/register_screen.dart';
 import 'package:provider/provider.dart';
-import 'services/firebase_messaging_service.dart';
-import 'config/firebase_options.dart';
-import 'services/local_notifications_service.dart';
-import 'services/snackbar_service.dart';
+import 'services/remote/firebase_messaging_service.dart';
+import 'config/firebase/firebase_options.dart';
+import 'services/local/local_notifications_service.dart';
+import 'utils/helpers/snackbar_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,14 +17,17 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  setupServiceLocator();
+
+  final firebaseMessagingService = sl<FirebaseMessagingService>();
 
   LocalNotificationService.initialize();
-  FirebaseMessagingService.initialize();
+  firebaseMessagingService.initialize();
 
   LocalNotificationService.scheduleDailyMotivationalMessage();
 
-
   await dotenv.load(fileName: ".env");
+
   runApp(const MyApp());
 }
 
@@ -36,7 +38,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthenticationProvider(FirebaseAuth.instance, FirebaseFirestore.instance))
+        ChangeNotifierProvider(create: (_) => AuthenticationProvider(sl()))
       ],
       child: MaterialApp(
         theme: ThemeData(
@@ -47,9 +49,8 @@ class MyApp extends StatelessWidget {
         onGenerateRoute: AppRoutes.onGenerateRoutes,
         title: 'IELTS Adviser',
         home: const RegisterPage(),
-        scaffoldMessengerKey: SnackbarService.scaffoldMessengerKey,
+        scaffoldMessengerKey: SnackbarHelper.scaffoldMessengerKey,
       ),
     );
   }
 }
-

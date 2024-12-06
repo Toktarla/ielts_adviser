@@ -2,21 +2,23 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:googleapis_auth/auth_io.dart' as auth;
-import '../core/variables.dart';
+import '../../config/variables.dart';
 import 'firestore_service.dart';
-import 'local_notifications_service.dart';
+import '../local/local_notifications_service.dart';
 
 class FirebaseMessagingService {
-  static final firebaseMessaging = FirebaseMessaging.instance;
-  static final firestoreService = FirestoreService();
+  final FirebaseMessaging firebaseMessaging;
+  final FirestoreService firestoreService;
+
+  FirebaseMessagingService(this.firebaseMessaging,this.firestoreService);
 
 
-  static void initialize() {
+  void initialize() {
     _requestPermission();
     _updateTokenOnRefresh();
   }
 
-  static Future<NotificationSettings> _requestPermission() async {
+  Future<NotificationSettings> _requestPermission() async {
     return await firebaseMessaging.requestPermission(
       alert: true,
       announcement: false,
@@ -28,7 +30,7 @@ class FirebaseMessagingService {
     );
   }
 
-  static void _updateTokenOnRefresh() {
+  void _updateTokenOnRefresh() {
     firebaseMessaging.onTokenRefresh.listen((String? fcmToken) async {
       firestoreService.updateToken(fcmToken);
     }, onError: (error) {
@@ -36,7 +38,7 @@ class FirebaseMessagingService {
     });
   }
 
-  static void messageListener() {
+  void messageListener() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Got a message in the foreground!');
       if (message.notification != null) {
